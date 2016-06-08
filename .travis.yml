@@ -120,11 +120,12 @@ before_script:
     # Get WebbPSF data files (just a subset of the usual 500 MB!) and set up environment variable
     - wget http://www.stsci.edu/~mperrin/software/webbpsf/minimal-webbpsf-data.tar.gz  -O /tmp/minimal-webbpsf-data.tar.gz
     - tar -xzf /tmp/minimal-webbpsf-data.tar.gz
-    - export WEBBPSF_PATH=$PWD/webbpsf-data 
+    - export WEBBPSF_PATH=$PWD/webbpsf-data
     - export WEBBPSF_SKIP_CHECK=1
 
 script:
-   - python setup.py $SETUP_CMD
+   - if [[ $SETUP_CMD == build_sphinx* ]]; then cd docs && make html; fi
+   - if [[ $SETUP_CMD != build_sphinx* ]]; then python setup.py $SETUP_CMD; fi
 
 after_success:
     # If coveralls.io is set up for this package, uncomment the line
