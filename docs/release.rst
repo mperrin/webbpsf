@@ -38,7 +38,7 @@ Releasing new versions on PyPI
  #. Edit ``relnotes.rst`` to add a release date and reference anchor (e.g. ``.. _rel0.X.Y:``) to the section for this release
  #. Update the link to "What's new" in ``index.rst``
  #. Add any important notes to the appropriate section in the release notes
- #. Edit ``setup.py`` in this repository to remove ``.dev`` from the version number in the ``VERSION`` variable
+ #. Edit ``webbpsf/VERSION`` in this repository to remove ``.dev0`` from the version number
  #. Build a source distribution with ``python setup.py build sdist``
  #. Copy the resulting file (``webbpsf-0.X.Y.tar.gz``) to a new folder, extract it, and ``cd`` there
  #. Run ``python setup.py test`` (preferably in a new ``virtualenv`` containing only the WebbPSF dependencies) and verify that the test suite passes with the code you're about to release
@@ -59,6 +59,6 @@ Finishing the release
 
  #. Commit your edits to ``relnotes.rst`` and ``setup.py``
  #. Tag that commit as the release with ``git tag v0.X.Y`` and push the tags to origin and upstream with ``git push --tags origin`` and ``git push --tags upstream``
- #. Edit ``setup.py`` to increment the version number in the ``VERSION`` variable and re-add the ``.dev`` suffix
+ #. Edit ``webbpsf/VERSION`` to increment the version number and re-add the ``.dev0`` suffix
  #. Edit ``relnotes.rst`` to add a new heading for the upcoming version
  #. Commit your edits with a message like "Back to development: version 0.X.Y+1"

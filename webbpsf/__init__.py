@@ -11,20 +11,14 @@ imaging and coronagraphic modes.
 Developed by Marshall Perrin and contributors at STScI, 2010-2015.
 """
 
-# Affiliated packages may add whatever they like to this file, but
-# should keep this content at the top.
-# ----------------------------------------------------------------------------
-from ._astropy_init import *
-# ----------------------------------------------------------------------------
-
 # This tuple gives the *minimum* version of the WebbPSF data package
 # required. If changes to the code and data mean WebbPSF won't work
 # properly with an old data package, increment this version number.
 # (It's checked against $WEBBPSF_DATA/version.txt)
 DATA_VERSION_MIN = (0, 5, 0)
 
-import astropy
 from astropy import config as _config
+
 
 class Conf(_config.ConfigNamespace):
     """
@@ -80,19 +74,17 @@ def _save_config():
 from . import utils
 from .utils import setup_logging, restart_logging, system_diagnostic, measure_strehl
 
-if not _ASTROPY_SETUP_:
-    if conf.autoconfigure_logging:
-        restart_logging(verbose=True)
+if conf.autoconfigure_logging:
+    restart_logging(verbose=True)
 
-    # this should display a warning to the user if they don't have WEBBPSF_PATH
-    # defined in either the environment or in webbpsf.cfg
-    try:
-        tmp, data_files_version = utils.get_webbpsf_data_path(data_version_min=DATA_VERSION_MIN, return_version=True)
-        del tmp
-    except (EnvironmentError, IOError):
-        import sys
-        sys.stderr.write(utils.MISSING_WEBBPSF_DATA_MESSAGE)
-        raise
+# this should display a warning to the user if they don't have WEBBPSF_PATH
+# defined in either the environment or in webbpsf.cfg
+try:
+    _, data_files_version = utils.get_webbpsf_data_path(data_version_min=DATA_VERSION_MIN, return_version=True)
+except (EnvironmentError, IOError):
+    import sys
+    sys.stderr.write(utils.MISSING_WEBBPSF_DATA_MESSAGE)
+    raise
 
 from poppy import (display_PSF, display_PSF_difference, display_EE, display_profiles, radial_profile,
         measure_EE, measure_radial, measure_fwhm, measure_sharpness, measure_centroid,
@@ -115,13 +107,6 @@ except ImportError:
     _HAVE_TK_GUI = False
 
 
-
-#if (_HAVE_WX_GUI or _HAVE_TK_GUI):
-
-    #import warnings
-    #warnings.warn("Warning: Neither Tk nor wx GUIs could be imported. "
-    #              "Graphical interface disabled")
-#else:
 def gui(preferred='wx'):
     """ Start the WebbPSF GUI with the selected interface
 
