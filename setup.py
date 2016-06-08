@@ -1,123 +1,105 @@
-#!/usr/bin/env python
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-# --based on setup.py from astropy--
-from __future__ import print_function
-
-import glob
-import os
+from codecs import open  # To use a consistent encoding
 import sys
-import imp
-import ast
+from os import path
+from setuptools import setup, find_packages  # Always prefer setuptools
+                                             # over distutils
 
-try:
-    import numpy
-except ImportError:
-    print("""
-WARNING: NumPy was not found! setup.py will attempt to install it if asked, but
-\tyou may experience issues. Try installing NumPy first, separately.
-\tSee https://github.com/numpy/numpy/issues/2434 for details.
-""")
+here = path.abspath(path.dirname(__file__))
 
-import ah_bootstrap
-from setuptools import setup
+# Get the long description from the relevant file
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+    long_description = f.read()
 
-#A dirty hack to get around some early import/configurations ambiguities
-if sys.version_info[0] >= 3:
-    import builtins
-else:
-    import __builtin__ as builtins
-builtins._ASTROPY_SETUP_ = True
+# Get the version number from the relevant file
+with open(path.join(here, 'webbpsf', 'VERSION'), encoding='utf-8') as f:
+    version = f.read()
 
-from astropy_helpers.setup_helpers import (
-    register_commands, adjust_compiler, get_debug_option, get_package_info)
-from astropy_helpers.git_helpers import get_git_devstr
-from astropy_helpers.version_helpers import generate_version_py
+# Check if we need the pytest hook before we hand over to setuptools
+needs_pytest = {'pytest', 'test'}.intersection(sys.argv)
+pytest_runner_if_needed = ['pytest', 'pytest_runner'] if needs_pytest else []
 
-# Get some values from the setup.cfg
-from distutils import config
-conf = config.ConfigParser()
-conf.read(['setup.cfg'])
-metadata = dict(conf.items('metadata'))
+install_requires_packages = [
+    'six>=1.7.3',
+    'numpy>=1.8.0',
+    'scipy>=0.14.0',
+    'matplotlib>=1.3.0',
+    'astropy>=1.0.1',
+    'poppy>=0.4.1',
+]
 
-PACKAGENAME = metadata.get('package_name', 'packagename')
-DESCRIPTION = metadata.get('description', 'Astropy affiliated package')
-AUTHOR = metadata.get('author', '')
-AUTHOR_EMAIL = metadata.get('author_email', '')
-LICENSE = metadata.get('license', 'unknown')
-URL = metadata.get('url', 'http://astropy.org')
+setup(
+    name='webbpsf',
 
-# Get the long description from the package's docstring
-_, module_path, _ = imp.find_module(PACKAGENAME)
-with open(os.path.join(module_path, '__init__.py')) as f:
-    module_ast = ast.parse(f.read())
-LONG_DESCRIPTION = ast.get_docstring(module_ast)
+    # Versions should comply with PEP440
+    version=version,
 
-# Store the package name in a built-in variable so it's easy
-# to get from other parts of the setup infrastructure
-builtins._ASTROPY_PACKAGE_NAME_ = PACKAGENAME
+    description='Simulates point-spread functions for instruments on JWST and WFIRST',
+    long_description=long_description,
 
-# VERSION should be PEP386 compatible (http://www.python.org/dev/peps/pep-0386)
-VERSION = '0.4.2.dev'
+    # The project's main homepage.
+    url='https://pythonhosted.org/webbpsf/',
 
-# Indicates if this version is a release version
-RELEASE = 'dev' not in VERSION
+    # Author details
+    author='Marshall Perrin',
+    author_email='mperrin@stsci.edu',
 
-if not RELEASE:
-    VERSION += get_git_devstr(False)
+    # Choose your license
+    license='BSD',
 
-# Populate the dict of setup command overrides; this should be done before
-# invoking any other functionality from distutils since it can potentially
-# modify distutils' behavior.
-cmdclassd = register_commands(PACKAGENAME, VERSION, RELEASE)
+    # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
+    classifiers=[
+        # How mature is this project? Common values are
+        #   3 - Alpha
+        #   4 - Beta
+        #   5 - Production/Stable
+        'Development Status :: 4 - Beta',
 
-# Adjust the compiler in case the default on this platform is to use a
-# broken one.
-adjust_compiler(PACKAGENAME)
+        # Indicate who your project is intended for
+        'Topic :: Scientific/Engineering :: Astronomy',
+        'Intended Audience :: Science/Research',
 
-# Freeze build information in version.py
-generate_version_py(PACKAGENAME, VERSION, RELEASE,
-                    get_debug_option(PACKAGENAME))
+        # Pick your license as you wish (should match "license" above)
+        'License :: OSI Approved :: BSD License',
 
-# Treat everything in scripts except README.rst as a script to be installed
-scripts = [fname for fname in glob.glob(os.path.join('scripts', '*'))
-           if os.path.basename(fname) != 'README.rst']
+        # Specify the Python versions you support here. In particular, ensure
+        # that you indicate whether you support Python 2, Python 3 or both.
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+    ],
 
+    # What does your project relate to?
+    keywords=('optics astronomy fraunhofer diffraction JWST WFIRST'
+              'coronagraph psf point spread function'),
 
-# Get configuration information from all of the various subpackages.
-# See the docstring for setup_helpers.update_package_files for more
-# details.
-package_info = get_package_info()
+    # You can just specify the packages manually here if your project is
+    # simple. Or you can use find_packages().
+    packages=['webbpsf'],
 
-# Add the project-global data
-package_info['package_data'].setdefault(PACKAGENAME, [])
-package_info['package_data'][PACKAGENAME].append('data/*')
+    # List setup-time dependencies here. These will be installed by pip when
+    # it invokes any setup.py actions
+    setup_requires=pytest_runner_if_needed,
 
-# Include all .c files, recursively, including those generated by
-# Cython, since we can not do this in MANIFEST.in with a "dynamic"
-# directory name.
-c_files = []
-for root, dirs, files in os.walk(PACKAGENAME):
-    for filename in files:
-        if filename.endswith('.c'):
-            c_files.append(
-                os.path.join(
-                    os.path.relpath(root, PACKAGENAME), filename))
-package_info['package_data'][PACKAGENAME].extend(c_files)
+    # List run-time dependencies here.  These will be installed by pip when your
+    # project is installed. For an analysis of "install_requires" vs pip's
+    # requirements files see:
+    # https://packaging.python.org/en/latest/requirements.html
+    install_requires=install_requires_packages,
 
-setup(name=PACKAGENAME,
-      version=VERSION,
-      description=DESCRIPTION,
-      scripts=scripts,
-      install_requires=['numpy', 'matplotlib', 'scipy', 'poppy', 'astropy'],
-      setup_requires=['numpy', 'astropy'],
-      provides=[PACKAGENAME],
-      author=AUTHOR,
-      author_email=AUTHOR_EMAIL,
-      license=LICENSE,
-      url=URL,
-      long_description=LONG_DESCRIPTION,
-      cmdclass=cmdclassd,
-      zip_safe=False,
-      use_2to3=True,
-      **package_info
+    # List additional groups of dependencies here (e.g. development dependencies).
+    # You can install these using the following syntax, for example:
+    # $ pip install -e .[dev,test]
+    extras_require = {
+        'dev': ['check-manifest'],
+        'test': ['pytest'],
+    },
+
+    # If there are data files included in your packages that need to be
+    # installed, specify them here.  If using Python 2.6 or less, then these
+    # have to be included in MANIFEST.in as well.
+    package_data={
+        'webbpsf': ['VERSION'],
+    },
 )
