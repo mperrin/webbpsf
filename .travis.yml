@@ -62,11 +62,14 @@ matrix:
         # Released POPPY may be missing new functionality used by dev WebbPSF
         - python: 2.7
           env: POPPY_VERSION=stable NUMPY_VERSION=1.8 SETUP_CMD='test'
-              
+
           # temporary - ignore failures on 3.5 due to py.test version issues
         - python: 3.5
           env: SETUP_CMD='test'
 
+        # TODO:jlong: finish converting docs to not depend on helpers
+        - python: 2.7
+          env: SETUP_CMD='build_sphinx'
 
 
 before_install:
@@ -120,11 +123,12 @@ before_script:
     # Get WebbPSF data files (just a subset of the usual 500 MB!) and set up environment variable
     - wget http://www.stsci.edu/~mperrin/software/webbpsf/minimal-webbpsf-data.tar.gz  -O /tmp/minimal-webbpsf-data.tar.gz
     - tar -xzf /tmp/minimal-webbpsf-data.tar.gz
-    - export WEBBPSF_PATH=$PWD/webbpsf-data 
+    - export WEBBPSF_PATH=$PWD/webbpsf-data
     - export WEBBPSF_SKIP_CHECK=1
 
 script:
-   - python setup.py $SETUP_CMD
+   - if [[ $SETUP_CMD == build_sphinx* ]]; then cd docs && make html; fi
+   - if [[ $SETUP_CMD != build_sphinx* ]]; then python setup.py $SETUP_CMD; fi
 
 after_success:
     # If coveralls.io is set up for this package, uncomment the line

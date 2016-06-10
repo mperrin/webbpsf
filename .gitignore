@@ -10,13 +10,10 @@ __pycache__
 *.c
 
 # Other generated files
-*/version.py
 */cython_version.py
 htmlcov
-.coverage
 
 # Sphinx
-docs/api
 docs/_build
 
 # Eclipse editor project files
@@ -50,16 +47,6 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 
-# Mac OS
-.DS_Store
-
-
-# Package-specific things to ignore:
-docs/_build
-docs/_generated
-app/
-distribute-*.tar.gz
-
 # Other
 .*.swp
 .*.sw[poq]
@@ -73,4 +60,3 @@ distribute-*.tar.gz
 
 # Example IPython notebook files
 .ipynb_checkpoints/
-my_log.txt
