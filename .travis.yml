@@ -56,6 +56,9 @@ matrix:
           env: POPPY_VERSION=stable NUMPY_VERSION=1.8 SETUP_CMD='test'
     allow_failures:
         - python: 3.5
+        # TODO:jlong: finish converting docs to not depend on helpers
+        - python: 2.7
+          env: SETUP_CMD='build_sphinx' # -w'
 
 
 
