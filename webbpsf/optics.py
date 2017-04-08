@@ -664,6 +664,55 @@ class NIRISS_CLEARP(poppy.CompoundAnalyticOptic):
                 poppy.CircularAperture( radius = 39 * pupil_mag /2) ), name = 'CLEARP')
 
 
+class NIRISSNonRedundantMask(poppy.AnalyticOpticalElement):
+    """NIRISS Non-Redundant Mask pupil optic
+
+    JWST design pupil geometry and segment coordinates taken
+    from Paul Lightsey's spreadsheet: "2010.03.16 Transmission X Area Budget.xls".
+    That document was in turn based on Ball Aerospace drawing 2220169 Rev B,
+    and the OTE Cryogenic Optics ICD, BATC doc # C327693.
+
+    .. warning:: At high sampling factors, PSF calculations become a LOT slower.
+
+    By default, this produces an aperture with values 0 and 1 for the transmission.
+    By setting the parameter label_segments=True, you can instead have it generate a map of
+    which segment number is in which location.
+    """
+
+    flat_to_flat_diameter = 1.34 # meters
+    mask_hole_diameter = 0.82 # meters
+    holey_segments = set(['C1-8', 'B2-9', 'B3-11', 'B4-13', 'C5-16', 'B6-17', 'C6-18'])
+
+    def __init__(self, name="NIRISS NRM", label_segments=False, **kwargs):
+        super(NIRISSNonRedundantMask, self).__init__(name=name, **kwargs)
+        self.label_segments = label_segments
+        self.segdata = constants.JWST_PRIMARY_SEGMENTS
+        self.seg_centers = constants.JWST_PRIMARY_SEGMENT_CENTERS
+
+    def get_transmission(self, wave):
+        segpaths = {}
+        for (segname, vertices), (_, center) in zip(self.segdata, self.seg_centers):
+            if segname not in self.holey_segments:
+                continue
+            path = (matplotlib.path.Path(vertices - center)
+                    .transformed(transforms.Affine2D()
+                                 .scale(self.mask_hole_diameter / self.flat_to_flat_diameter)
+                                 .translate(*center)
+                                ))
+            segpaths[segname] = path
+
+        y, x = wave.coordinates()
+        pts = np.asarray([a for a in zip(x.flat, y.flat)])
+        npix = wave.shape[0]
+        out = np.zeros((npix, npix))
+
+        for segname, p in segpaths.items():
+            res = p.contains_points(pts)
+            res.shape = (npix, npix)
+            out[res] = 1 if not self.label_segments else int(segname.split('-')[1])
+        return out
+
+
 class NIRCam_BandLimitedCoron(poppy.BandLimitedCoron):
     """ Band Limited Coronagraph
 
