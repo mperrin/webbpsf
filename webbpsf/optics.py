@@ -5,6 +5,7 @@ import poppy.utils
 import numpy as np
 import scipy
 import matplotlib
+from matplotlib import transforms
 
 from astropy.table import Table
 import astropy.io.fits as fits
@@ -683,11 +684,12 @@ class NIRISSNonRedundantMask(poppy.AnalyticOpticalElement):
     mask_hole_diameter = 0.82 # meters
     holey_segments = set(['C1-8', 'B2-9', 'B3-11', 'B4-13', 'C5-16', 'B6-17', 'C6-18'])
 
-    def __init__(self, name="NIRISS NRM", label_segments=False, **kwargs):
+    def __init__(self, name="NIRISS NRM", label_segments=False, flip_x=False, flip_y=False, **kwargs):
         super(NIRISSNonRedundantMask, self).__init__(name=name, **kwargs)
         self.label_segments = label_segments
         self.segdata = constants.JWST_PRIMARY_SEGMENTS
         self.seg_centers = constants.JWST_PRIMARY_SEGMENT_CENTERS
+        self.flip_x, self.flip_y = flip_x, flip_y
 
     def get_transmission(self, wave):
         segpaths = {}
@@ -710,6 +712,10 @@ class NIRISSNonRedundantMask(poppy.AnalyticOpticalElement):
             res = p.contains_points(pts)
             res.shape = (npix, npix)
             out[res] = 1 if not self.label_segments else int(segname.split('-')[1])
+        if self.flip_x:
+            out = np.fliplr(out)
+        if self.flip_y:
+            out = np.flipud(out)
         return out
 
 

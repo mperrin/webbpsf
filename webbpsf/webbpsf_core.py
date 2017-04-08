@@ -1356,9 +1356,11 @@ class NIRISS(JWInstrument):
                         flip_y=True, shift=shift)
             else:
                 optsys.add_pupil(
-                    optic=optics.NIRISSNonRedundantMask(),
-                    name=self.pupil_mask, flip_y=True, shift=shift
+                    optic=optics.NIRISSNonRedundantMask(flip_y=True),
+                    name=self.pupil_mask,
                 )
+                if shift is not None:
+                    raise NotImplementedError("Pupil shifts for NIRISS analytic NRM are not implemented")
             optsys.planes[-1].wavefront_display_hint = 'intensity'
         elif self.pupil_mask == 'CLEARP':
             optsys.add_pupil(optic = NIRISS_CLEARP())
