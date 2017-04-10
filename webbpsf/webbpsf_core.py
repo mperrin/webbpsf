@@ -1302,7 +1302,7 @@ class NIRISS(JWInstrument):
     LONG_WAVELENGTH_MAX = 5.3 * 1e-6
 
 
-    def __init__(self, auto_pupil=True, _use_raster_nrm=True):
+    def __init__(self, auto_pupil=True):
         self.auto_pupil = auto_pupil
         JWInstrument.__init__(self, "NIRISS")
         self.pixelscale = 0.0656     # SIAF PRDDEVSOC-D-012, 2016 April
@@ -1312,7 +1312,6 @@ class NIRISS(JWInstrument):
 
         self._detectors = {'NIRISS':'NIS_CEN'}
         self.detector=self.detector_list[0]
-        self._use_raster_nrm = _use_raster_nrm
 
 
     def _addAdditionalOptics(self,optsys, oversample=2):
@@ -1351,16 +1350,12 @@ class NIRISS(JWInstrument):
             shift = None
 
         if self.pupil_mask == 'MASK_NRM':
-            if self._use_raster_nrm:
-                optsys.add_pupil(transmission=self._datapath+"/optics/MASK_NRM.fits.gz", name=self.pupil_mask,
-                        flip_y=True, shift=shift)
-            else:
-                optsys.add_pupil(
-                    optic=optics.NIRISSNonRedundantMask(flip_y=True),
-                    name=self.pupil_mask,
-                )
-                if shift is not None:
-                    raise NotImplementedError("Pupil shifts for NIRISS analytic NRM are not implemented")
+            optsys.add_pupil(
+                optic=optics.NIRISSNonRedundantMask(flip_y=True),
+                name=self.pupil_mask,
+            )
+            if shift is not None:
+                raise NotImplementedError("Pupil shifts for NIRISS analytic NRM are not implemented")
             optsys.planes[-1].wavefront_display_hint = 'intensity'
         elif self.pupil_mask == 'CLEARP':
             optsys.add_pupil(optic = NIRISS_CLEARP())
