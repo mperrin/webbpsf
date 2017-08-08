@@ -703,7 +703,7 @@ class NIRISSNonRedundantMask(poppy.AnalyticOpticalElement):
                                 ))
             segpaths[segname] = path
 
-        y, x = wave.coordinates()
+        y, x = self.get_coordinates(wave)
         pts = np.asarray([a for a in zip(x.flat, y.flat)])
         npix = wave.shape[0]
         out = np.zeros((npix, npix))
