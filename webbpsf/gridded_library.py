@@ -103,7 +103,6 @@ class CreatePSFLibrary:
         except ImportError:
             raise ImportError("This method requires photutils >= 0.6")
 
-
         # Pull WebbPSF instance
         self.webb = instrument
         self.instr = instrument.name
@@ -166,7 +165,7 @@ class CreatePSFLibrary:
         # Set detector list to loop over
         if detectors == "all":
             if self.instr != "NIRCam":
-                det= self.webb.detector_list
+                det = self.webb.detector_list
             elif self.instr == "NIRCam" and filt in CreatePSFLibrary.nrca_short_filters:
                 det = CreatePSFLibrary.nrca_short_detectors
             elif self.instr == "NIRCam" and filt in CreatePSFLibrary.nrca_long_filters:
@@ -255,6 +254,7 @@ class CreatePSFLibrary:
 
                 if self.verbose is True:
                     print("    Position {}/{}: {} pixels".format(i+1, len(self.location_list), loc))
+
                 # Create PSF
                 psf = self.webb.calc_psf(**self._kwargs)
 
@@ -270,13 +270,20 @@ class CreatePSFLibrary:
             meta["INSTRUME"] = (self.instr, "Instrument name")
             meta["DETECTOR"] = (det, "Detector name")
             meta["FILTER"] = (self.filter, "Filter name")
-            meta["PUPILOPD"] = (self.webb.pupilopd, "Pupil OPD source name")
+            meta["PUPILOPD"] = (psf[ext].header["PUPILOPD"], "Pupil OPD source name")
+            meta['OPD_FILE'] = (psf[ext].header["OPD_FILE"], 'Pupil OPD file name')
+            meta['OPDSLICE'] = (psf[ext].header["OPDSLICE"], 'Pupil OPD slice number')
 
             meta["FOVPIXEL"] = (self.fov_pixels, "Field of view in pixels (full array)")
             meta["FOV"] = (psf[ext].header["FOV"], "Field of view in arcsec (full array)")
             meta["OVERSAMP"] = (psf[ext].header["OVERSAMP"], "Oversampling factor for FFTs in computation")
             meta["DET_SAMP"] = (psf[ext].header["DET_SAMP"], "Oversampling factor for MFT to detector plane")
             meta["NWAVES"] = (psf[ext].header["NWAVES"], "Number of wavelengths used in calculation")
+
+            if self.webb.image_mask is not None:
+                meta["CORONMSK"] = (self.webb.image_mask, "Image plane mask")
+            if self.webb.pupil_mask is not None:
+                meta["PUPIL"] = (self.webb.pupil_mask, "Pupil plane mask")
 
             for h, loc in enumerate(self.location_list):  # these were originally written out in (x,y)
                 loc = np.asarray(loc, dtype=float)
@@ -306,9 +313,9 @@ class CreatePSFLibrary:
                 if self.instr is "MIRI":
                     meta["MIR_DIST"] = (psf[ext].header["MIR_DIST"], "MIRI detector scattering applied")
                     meta["KERN_AMP"] = (psf[ext].header["KERN_AMP"],
-                                          "Amplitude(A) in kernel function A * exp(-x / B)")
+                                        "Amplitude(A) in kernel function A * exp(-x / B)")
                     meta["KERNFOLD"] = (psf[ext].header["KERNFOLD"],
-                                          "e - folding length(B) in kernel func A * exp(-x / B)")
+                                        "e - folding length(B) in kernel func A * exp(-x / B)")
 
             # Pull values from the last made psf
             meta["WAVELEN"] = (psf[ext].header["WAVELEN"], "Weighted mean wavelength in meters")
@@ -340,7 +347,8 @@ class CreatePSFLibrary:
         else:
             return model_list
 
-    def to_model(self, data, meta):
+    @staticmethod
+    def to_model(data, meta):
         """
         Create a photutils GriddedPSFModel object from input data and meta information
 
@@ -369,7 +377,7 @@ class CreatePSFLibrary:
                                   for key in ndd.meta.keys() if "DET_YX" in key]
 
         ndd.meta['oversampling'] = meta["OVERSAMP"][0]  # just pull the value
-        ndd.meta = {key.lower(): ndd.meta[key] for key in ndd.meta if "DET_YX" not in key and "OVERSAMP" not in key}
+        ndd.meta = {key.lower(): ndd.meta[key] for key in ndd.meta}
 
         model = GriddedPSFModel(ndd)
 
